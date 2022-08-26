@@ -1,0 +1,64 @@
+import pandas
+import os
+
+import pandas as pd
+
+from variables import mocap_data, mediapipe_data, pose_landmarks
+import re
+
+def mediapipe_files_finder(file, mediapipe_data):
+    #file is the scenario name
+    #mediapipe_data
+    for it in os.walk(mediapipe_data):
+        file = file+".csv"
+        file = file[0]  +file[2:]
+        files = it[2]
+        try:
+            file_index = files.index(file)
+            #print(file_index)
+            file_locaton = file_location = it[0] +'\\'+ files[file_index]
+            return file_locaton
+        except:
+           continue
+
+
+
+
+def map_mediapipe_mocap_annotation(file, filelocation):
+    scenario = file[:11]  #the logistic scenario for a particular files
+    try:
+        mediapipe_equivalent = mediapipe_files_finder(scenario, mediapipe_data) #check if the equivalent file  in the mediapipe dataset,
+        print(mediapipe_equivalent)
+        # add the features to the mediapipe data
+        # create new dataFrame
+        mediapipe_df = pd.read_csv(f'{mediapipe_equivalent}')
+        mediapipe_df = mediapipe_df[mediapipe_df.columns[1:]]
+        mediapipe_df.columns = pose_landmarks
+
+        mocap_df = pd.read_csv(f'{filelocation}')
+        #print(mocap_df.info())
+        mocap_df = mocap_df.iloc[::7]
+        mediapipe_df['label'] = mocap_df['label']
+        mediapipe_df['sample'] = mocap_df['sample']
+        print(mediapipe_df.info())
+        file = file[:11] + '_mapped.csv'
+        mediapipe_df.to_csv(f'C:\\Users\\Schorsch\\Downloads\\MappedRGBWithMocap\\{file}')
+    except:
+        pass
+
+
+
+
+
+
+if __name__ == '__main__':
+    #using os.walk to get the folder and the files consisting in the folder
+    # os.walk returns the tuple with three elements, (Main_Folder, SubFolder, Files)
+    for it in os.walk(mocap_data):
+        files = it[2]
+        for file in files:
+            file_location = it[0] +'\\'+ file
+            if(file[-13:] == 'norm_data.csv'):
+                map_mediapipe_mocap_annotation(file, file_location)
+
+
